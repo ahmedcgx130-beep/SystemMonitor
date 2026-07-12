@@ -29,66 +29,22 @@ jobs:
       - name: Setup Gradle Build Environment
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Generate Official Production Keystore (Proof of Ownership)
-        env:
-          KEY_ALIAS_RAW: ${{ secrets.KEY_ALIAS }}
-          KEY_PASS_RAW: ${{ secrets.KEYSTORE_PASSWORD }}
+      - name: Build Unsigned Production APK
         run: |
           cd system-monitor
-          keytool -genkeypair -v \
-            -keystore app/keystore.jks \
-            -alias "$KEY_ALIAS_RAW" \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -storepass "$KEY_PASS_RAW" \
-            -keypass "$KEY_PASS_RAW" \
-            -dname "CN=ahmedfady, OU=ahmed, O=SystemMonitor, L=Cairo, S=Cairo, C=EG"
+          gradle assembleRelease -Pandroid.overrideVersionCheck=true
 
-      - name: Inject Configuration via Local Properties Safely
-        env:
-          KEY_ALIAS_RAW: ${{ secrets.KEY_ALIAS }}
-          KEY_PASS_RAW: ${{ secrets.KEYSTORE_PASSWORD }}
-        run: |
-          cd system-monitor
-          touch local.properties
-          echo "keystore.password=$KEY_PASS_RAW" >> local.properties
-          echo "keystore.alias=$KEY_ALIAS_RAW" >> local.properties
-
-      - name: Connect Signing Config inside Build Gradle KTS Safely
-        run: |
-          cd system-monitor/app
-          cat << 'EOF' >> build.gradle.kts
-          
-          android {
-              signingConfigs {
-                  create("release") {
-                      val properties = java.util.Properties()
-                      val propertiesFile = rootProject.file("local.properties")
-                      if (propertiesFile.exists()) {
-                          properties.load(java.io.FileInputStream(propertiesFile))
-                      }
-                      storeFile = file("keystore.jks")
-                      storePassword = properties.getProperty("keystore.password")
-                      keyAlias = properties.getProperty("keystore.alias")
-                      keyPassword = properties.getProperty("keystore.password")
-                  }
-              }
-              buildTypes {
-                  release {
-                      signingConfig = signingConfigs.getByName("release")
-                  }
-              }
-          }
-          EOF
-
-      - name: Build Signed Production APK
-        run: |
-          cd system-monitor
-          gradle assembleRelease --stacktrace -Pandroid.overrideVersionCheck=true
+      - name: Sign Production APK (Proof of Ownership)
+        uses: r0adkll/sign-android-release@v1
+        id: sign_app
+        with:
+          releaseDirectory: system-monitor/app/build/outputs/apk/release
+          alias: ${{ secrets.KEY_ALIAS }}
+          keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
+          keyPassword: ${{ secrets.KEYSTORE_PASSWORD }}
 
       - name: Upload Certified Production APK
         uses: actions/upload-artifact@v4
         with:
           name: Production-Signed-APK
-          path: system-monitor/app/build/outputs/apk/release/
+          path: ${{ steps.sign_app.outputs.signedReleaseFile }}
