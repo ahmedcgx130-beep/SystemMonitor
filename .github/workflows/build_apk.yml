@@ -55,28 +55,28 @@ jobs:
           echo "keystore.password=$KEY_PASS_RAW" >> local.properties
           echo "keystore.alias=$KEY_ALIAS_RAW" >> local.properties
 
-      - name: Connect Signing Config inside Build Gradle
+      - name: Connect Signing Config inside Build Gradle KTS Safely
         run: |
           cd system-monitor/app
-          cat << 'EOF' >> build.gradle
+          cat << 'EOF' >> build.gradle.kts
           
           android {
               signingConfigs {
-                  release {
-                      def properties = new Properties()
-                      def propertiesFile = rootProject.file('local.properties')
+                  create("release") {
+                      val properties = java.util.Properties()
+                      val propertiesFile = rootProject.file("local.properties")
                       if (propertiesFile.exists()) {
-                          properties.load(new FileInputStream(propertiesFile))
+                          properties.load(java.io.FileInputStream(propertiesFile))
                       }
-                      storeFile file("keystore.jks")
-                      storePassword properties['keystore.password']
-                      keyAlias properties['keystore.alias']
-                      keyPassword properties['keystore.password']
+                      storeFile = file("keystore.jks")
+                      storePassword = properties.getProperty("keystore.password")
+                      keyAlias = properties.getProperty("keystore.alias")
+                      keyPassword = properties.getProperty("keystore.password")
                   }
               }
               buildTypes {
                   release {
-                      signingConfig signingConfigs.release
+                      signingConfig = signingConfigs.getByName("release")
                   }
               }
           }
