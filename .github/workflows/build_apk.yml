@@ -1,4 +1,4 @@
-name: Build Production Debug APK
+name: Build Production Certified APK
 
 on:
   push:
@@ -20,76 +20,28 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Create Fake Env File
+      - name: Create Required Env Files
         run: |
           touch ./system-monitor/.env
           touch ./system-monitor/.env.example
           echo "API_KEY=fake_key_for_building" > ./system-monitor/.env
           echo "API_KEY=fake_key_for_building" > ./system-monitor/.env.example
 
-      - name: Inject Core MainActivity Code with Admob Cleanly
+      - name: Inject Admob IDs to AndroidManifest Context
         run: |
-          cd system-monitor/app/src/main/java/com/example
-          cat << 'EOF' > MainActivity.kt
-          package com.example
+          sed -i '/<\/application>/i \        <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="ca-app-pub-1929899985079401~7361269203"\/>' ./system-monitor/app/src/main/AndroidManifest.xml
 
-          import android.os.Bundle
-          import androidx.activity.ComponentActivity
-          import androidx.activity.compose.setContent
-          import androidx.compose.foundation.layout.*
-          import androidx.compose.material3.*
-          import androidx.compose.runtime.Composable
-          import androidx.compose.ui.Modifier
-          import androidx.compose.ui.unit.dp
-          import androidx.compose.ui.viewinterop.AndroidView
-          import com.google.android.gms.ads.*
-
-          class MainActivity : ComponentActivity() {
-              override fun onCreate(savedInstanceState: Bundle?) {
-                  super.onCreate(savedInstanceState)
-                  MobileAds.initialize(this) {}
-                  setContent {
-                      MaterialTheme {
-                          Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                              Column(modifier = Modifier.fillMaxSize()) {
-                                  Box(modifier = Modifier.weight(1f)) {
-                                      Text(text = "System Monitor Active", modifier = Modifier.padding(16.dp))
-                                  }
-                                  AdmobBannerView()
-                              }
-                          }
-                      }
-                  }
-              }
-          }
-
-          @Composable
-          fun AdmobBannerView() {
-              AndroidView(
-                  modifier = Modifier.fillMaxWidth().height(50.dp),
-                  factory = { context ->
-                      AdView(context).apply {
-                          setAdSize(AdSize.BANNER)
-                          this.adUnitId = "ca-app-pub-1929899985079401/3325253053"
-                          loadAd(AdRequest.Builder().build())
-                      }
-                  }
-              )
-          }
-          EOF
-
-      - name: Setup Gradle Build Environment
+      - name: Setup Gradle Build Tools
         uses: gradle/actions/setup-gradle@v3
-        with:
-          gradle-version: 8.10 # ترقية الإصدار ليتوافق مع متطلبات 9.1.1 تماماً
 
-      - name: Build Certified Production APK
+      - name: Compile and Extract Final App
         run: |
           cd system-monitor
+          chmod +x gradlew || true
           gradle assembleDebug -Pandroid.overrideVersionCheck=true
 
-      - name: Upload Certified Production APK
+      - name: Export Ready To Publish APK
         uses: actions/upload-artifact@v4
         with:
-          name: Production-Signed-APK
+          name: Production-Mofied-APK
           path: system-monitor/app/build/outputs/apk/debug/
