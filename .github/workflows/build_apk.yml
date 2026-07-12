@@ -45,16 +45,42 @@ jobs:
             -keypass "$KEY_PASS_RAW" \
             -dname "CN=ahmedfady, OU=ahmed, O=SystemMonitor, L=Cairo, S=Cairo, C=EG"
 
-      - name: Inject Configuration via Local Properties File
+      - name: Inject Configuration via Local Properties Safely
         env:
           KEY_ALIAS_RAW: ${{ secrets.KEY_ALIAS }}
           KEY_PASS_RAW: ${{ secrets.KEYSTORE_PASSWORD }}
         run: |
           cd system-monitor
           touch local.properties
-          echo "keystore.file=keystore.jks" >> local.properties
           echo "keystore.password=$KEY_PASS_RAW" >> local.properties
           echo "keystore.alias=$KEY_ALIAS_RAW" >> local.properties
+
+      - name: Connect Signing Config inside Build Gradle
+        run: |
+          cd system-monitor/app
+          cat << 'EOF' >> build.gradle
+          
+          android {
+              signingConfigs {
+                  release {
+                      def properties = new Properties()
+                      def propertiesFile = rootProject.file('local.properties')
+                      if (propertiesFile.exists()) {
+                          properties.load(new FileInputStream(propertiesFile))
+                      }
+                      storeFile file("keystore.jks")
+                      storePassword properties['keystore.password']
+                      keyAlias properties['keystore.alias']
+                      keyPassword properties['keystore.password']
+                  }
+              }
+              buildTypes {
+                  release {
+                      signingConfig signingConfigs.release
+                  }
+              }
+          }
+          EOF
 
       - name: Build Signed Production APK
         run: |
