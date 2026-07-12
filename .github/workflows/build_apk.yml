@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch: # هذا السطر السحري هو الذي سيظهر لك الزر الرمادي فوراً!
+  workflow_dispatch:
 
 jobs:
   build:
@@ -110,6 +110,8 @@ jobs:
 
       - name: Setup Gradle Build Environment
         uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: 8.4 # إجبار السيرفر على استخدام هذا الإصدار المتوافق
 
       - name: Build Certified Production APK
         run: |
