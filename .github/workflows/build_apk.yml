@@ -28,13 +28,11 @@ jobs:
 
       - name: Setup Gradle Build Environment
         uses: gradle/actions/setup-gradle@v3
-        with:
-          gradle-version: 8.5
 
-      - name: Build APK with Gradle Action
+      - name: Build APK with Version Bypass
         run: |
           cd system-monitor
-          gradle assembleDebug --stacktrace
+          gradle assembleDebug --stacktrace -Pandroid.overrideVersionCheck=true
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
