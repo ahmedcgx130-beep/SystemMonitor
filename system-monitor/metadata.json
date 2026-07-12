@@ -1,0 +1,6 @@
+{
+  "name": "System Monitor",
+  "description": "Monitor FPS, CPU Temperature, and Memory Usage",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
