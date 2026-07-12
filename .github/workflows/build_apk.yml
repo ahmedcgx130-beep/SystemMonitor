@@ -19,6 +19,11 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
+      - name: Generate Gradle Wrapper
+        run: |
+          cd system-monitor
+          gradle wrapper --gradle-version 8.2
+
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
@@ -33,4 +38,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: system-monitor-apk
-          path: system-monitor/app/build/outputs/apk/release/app-release-unsigned.apk
+          path: system-monitor/app/build/outputs/apk/release/
