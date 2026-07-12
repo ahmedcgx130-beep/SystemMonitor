@@ -81,7 +81,7 @@ jobs:
       - name: Setup Gradle Build Environment
         uses: gradle/actions/setup-gradle@v3
         with:
-          gradle-version: 8.4
+          gradle-version: 8.10 # ترقية الإصدار ليتوافق مع متطلبات 9.1.1 تماماً
 
       - name: Build Certified Production APK
         run: |
