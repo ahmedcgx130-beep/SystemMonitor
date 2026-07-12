@@ -26,13 +26,19 @@ jobs:
           echo "API_KEY=fake_key_for_building" > ./system-monitor/.env
           echo "API_KEY=fake_key_for_building" > ./system-monitor/.env.example
 
+      - name: Force Generate Local Gradle Wrapper
+        run: |
+          cd system-monitor
+          gradle wrapper --gradle-version 8.4 --distribution-type bin
+
       - name: Setup Gradle Build Environment
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Build APK with Version Bypass
+      - name: Grant Permission and Build APK
         run: |
           cd system-monitor
-          gradle assembleDebug --stacktrace -Pandroid.overrideVersionCheck=true
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
