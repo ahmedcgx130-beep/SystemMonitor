@@ -26,25 +26,31 @@ jobs:
           echo "API_KEY=fake_key_for_building" > ./system-monitor/.env
           echo "API_KEY=fake_key_for_building" > ./system-monitor/.env.example
 
+      - name: Generate Required Upload Keystore (Proof of Ownership)
+        env:
+          KEY_PASS_RAW: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          cd system-monitor
+          keytool -genkeypair -v \
+            -keystore my-upload-key.jks \
+            -alias "upload" \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -storepass "android" \
+            -keypass "android" \
+            -dname "CN=ahmedfady, OU=ahmed, O=SystemMonitor, L=Cairo, S=Cairo, C=EG"
+
       - name: Setup Gradle Build Environment
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Build Unsigned Production APK
+      - name: Build Certified Production APK
         run: |
           cd system-monitor
           gradle assembleRelease -Pandroid.overrideVersionCheck=true
-
-      - name: Sign Production APK (Proof of Ownership)
-        uses: r0adkll/sign-android-release@v1
-        id: sign_app
-        with:
-          releaseDirectory: system-monitor/app/build/outputs/apk/release
-          alias: ${{ secrets.KEY_ALIAS }}
-          keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
-          keyPassword: ${{ secrets.KEYSTORE_PASSWORD }}
 
       - name: Upload Certified Production APK
         uses: actions/upload-artifact@v4
         with:
           name: Production-Signed-APK
-          path: ${{ steps.sign_app.outputs.signedReleaseFile }}
+          path: system-monitor/app/build/outputs/apk/release/
