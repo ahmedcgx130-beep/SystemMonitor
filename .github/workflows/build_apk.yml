@@ -19,6 +19,13 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
+      - name: Create Fake Env File
+        run: |
+          touch ./system-monitor/.env
+          touch ./system-monitor/.env.example
+          echo "API_KEY=fake_key_for_building" > ./system-monitor/.env
+          echo "API_KEY=fake_key_for_building" > ./system-monitor/.env.example
+
       - name: Generate Gradle Wrapper
         run: |
           cd system-monitor
