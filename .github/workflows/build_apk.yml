@@ -1,4 +1,4 @@
-name: Build Production Signed APK
+name: Build Production Debug APK
 
 on:
   push:
@@ -26,19 +26,6 @@ jobs:
           touch ./system-monitor/.env.example
           echo "API_KEY=fake_key_for_building" > ./system-monitor/.env
           echo "API_KEY=fake_key_for_building" > ./system-monitor/.env.example
-
-      - name: Generate Required Upload Keystore (Proof of Ownership)
-        run: |
-          cd system-monitor
-          keytool -genkeypair -v \
-            -keystore app/my-upload-key.jks \
-            -alias "upload" \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -storepass "android" \
-            -keypass "android" \
-            -dname "CN=ahmedfady, OU=ahmed, O=SystemMonitor, L=Cairo, S=Cairo, C=EG"
 
       - name: Inject Core MainActivity Code with Admob Cleanly
         run: |
@@ -91,35 +78,18 @@ jobs:
           }
           EOF
 
-      - name: Force Overwrite Signing Config inside Build Gradle KTS
-        run: |
-          cd system-monitor/app
-          cat << 'EOF' >> build.gradle.kts
-          
-          android {
-              signingConfigs {
-                  getByName("release") {
-                      storeFile = file("my-upload-key.jks")
-                      storePassword = "android"
-                      keyAlias = "upload"
-                      keyPassword = "android"
-                  }
-              }
-          }
-          EOF
-
       - name: Setup Gradle Build Environment
         uses: gradle/actions/setup-gradle@v3
         with:
-          gradle-version: 8.4 # إجبار السيرفر على استخدام هذا الإصدار المتوافق
+          gradle-version: 8.4
 
       - name: Build Certified Production APK
         run: |
           cd system-monitor
-          gradle assembleRelease -Pandroid.overrideVersionCheck=true
+          gradle assembleDebug -Pandroid.overrideVersionCheck=true
 
       - name: Upload Certified Production APK
         uses: actions/upload-artifact@v4
         with:
           name: Production-Signed-APK
-          path: system-monitor/app/build/outputs/apk/release/
+          path: system-monitor/app/build/outputs/apk/debug/
