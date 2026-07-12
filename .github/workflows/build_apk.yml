@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build Production Signed APK
 
 on:
   push:
@@ -26,22 +26,51 @@ jobs:
           echo "API_KEY=fake_key_for_building" > ./system-monitor/.env
           echo "API_KEY=fake_key_for_building" > ./system-monitor/.env.example
 
-      - name: Force Generate Local Gradle Wrapper
-        run: |
-          cd system-monitor
-          gradle wrapper --gradle-version 8.4 --distribution-type bin
-
       - name: Setup Gradle Build Environment
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Grant Permission and Build APK
+      - name: Generate Official Production Keystore (Proof of Ownership)
         run: |
           cd system-monitor
-          chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
+          keytool -genkeypair -v \
+            -keystore app/keystore.jks \
+            -alias "${{ secrets.KEY_ALIAS }}" \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -storepass "${{ secrets.KEYSTORE_PASSWORD }}" \
+            -keypass "${{ secrets.KEYSTORE_PASSWORD }}" \
+            -dname "CN=ahmedfady, OU=ahmed, O=SystemMonitor, L=Cairo, S=Cairo, C=EG"
 
-      - name: Upload APK Artifact
+      - name: Inject Signing Configuration into Gradle
+        run: |
+          cd system-monitor/app
+          cat <<EOF >> build.gradle
+          
+          android {
+              signingConfigs {
+                  release {
+                      storeFile file("keystore.jks")
+                      storePassword "${{ secrets.KEYSTORE_PASSWORD }}"
+                      keyAlias "${{ secrets.KEY_ALIAS }}"
+                      keyPassword "${{ secrets.KEYSTORE_PASSWORD }}"
+                  }
+              }
+              buildTypes {
+                  release {
+                      signingConfig signingConfigs.release
+                  }
+              }
+          }
+          EOF
+
+      - name: Build Signed Production APK
+        run: |
+          cd system-monitor
+          gradle assembleRelease --stacktrace -Pandroid.overrideVersionCheck=true
+
+      - name: Upload Certified Production APK
         uses: actions/upload-artifact@v4
         with:
-          name: system-monitor-apk
-          path: system-monitor/app/build/outputs/apk/debug/
+          name: Production-Signed-APK
+          path: system-monitor/app/build/outputs/apk/release/
