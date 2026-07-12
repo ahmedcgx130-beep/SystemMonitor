@@ -30,19 +30,25 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
 
       - name: Generate Official Production Keystore (Proof of Ownership)
+        env:
+          KEY_ALIAS_RAW: ${{ secrets.KEY_ALIAS }}
+          KEY_PASS_RAW: ${{ secrets.KEYSTORE_PASSWORD }}
         run: |
           cd system-monitor
           keytool -genkeypair -v \
             -keystore app/keystore.jks \
-            -alias "${{ secrets.KEY_ALIAS }}" \
+            -alias "$KEY_ALIAS_RAW" \
             -keyalg RSA \
             -keysize 2048 \
             -validity 10000 \
-            -storepass "${{ secrets.KEYSTORE_PASSWORD }}" \
-            -keypass "${{ secrets.KEYSTORE_PASSWORD }}" \
+            -storepass "$KEY_PASS_RAW" \
+            -keypass "$KEY_PASS_RAW" \
             -dname "CN=ahmedfady, OU=ahmed, O=SystemMonitor, L=Cairo, S=Cairo, C=EG"
 
-      - name: Inject Signing Configuration into Gradle
+      - name: Inject Signing Configuration into Gradle Safely
+        env:
+          KEY_ALIAS_RAW: ${{ secrets.KEY_ALIAS }}
+          KEY_PASS_RAW: ${{ secrets.KEYSTORE_PASSWORD }}
         run: |
           cd system-monitor/app
           cat <<EOF >> build.gradle
@@ -51,9 +57,9 @@ jobs:
               signingConfigs {
                   release {
                       storeFile file("keystore.jks")
-                      storePassword "${{ secrets.KEYSTORE_PASSWORD }}"
-                      keyAlias "${{ secrets.KEY_ALIAS }}"
-                      keyPassword "${{ secrets.KEYSTORE_PASSWORD }}"
+                      storePassword "${KEY_PASS_RAW}"
+                      keyAlias "${KEY_ALIAS_RAW}"
+                      keyPassword "${KEY_PASS_RAW}"
                   }
               }
               buildTypes {
