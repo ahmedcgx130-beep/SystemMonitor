@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch: # هذا السطر السحري هو الذي سيظهر لك الزر الرمادي فوراً!
 
 jobs:
   build:
@@ -39,7 +40,7 @@ jobs:
             -keypass "android" \
             -dname "CN=ahmedfady, OU=ahmed, O=SystemMonitor, L=Cairo, S=Cairo, C=EG"
 
-      - name: Reset MainActivity to Original and Inject Admob Cleanly
+      - name: Inject Core MainActivity Code with Admob Cleanly
         run: |
           cd system-monitor/app/src/main/java/com/example
           cat << 'EOF' > MainActivity.kt
@@ -65,8 +66,7 @@ jobs:
                           Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                               Column(modifier = Modifier.fillMaxSize()) {
                                   Box(modifier = Modifier.weight(1f)) {
-                                      // استدعاء واجهة تطبيق Google AI Studio الأصلية لتشغيل المراقبة
-                                      Text("System Monitor Active") 
+                                      Text(text = "System Monitor Active", modifier = Modifier.padding(16.dp))
                                   }
                                   AdmobBannerView()
                               }
