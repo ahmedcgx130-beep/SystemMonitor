@@ -37,8 +37,8 @@ jobs:
       - name: Grant Execute Permission for Gradlew
         run: chmod +x ./system-monitor/gradlew
 
-      - name: Build APK (Debug Mode)
-        run: ./gradlew assembleDebug
+      - name: Build APK (Debug Mode with Custom Cache)
+        run: ./gradlew assembleDebug --no-daemon -g ./gradle-cache
         working-directory: ./system-monitor
 
       - name: Upload APK
