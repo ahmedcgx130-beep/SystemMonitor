@@ -1,5 +1,12 @@
 package com.example
-
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.AdSize
+import com.google.android.gms.ads.AdView
+import com.google.android.gms.ads.MobileAds
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.unit.dp
 import android.os.Bundle
 import android.os.Build
 import androidx.activity.ComponentActivity
@@ -546,7 +553,22 @@ fun HistoryScreen() {
                     Text("أداء الجهاز: ${session.third}", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
+            AdmobBannerView()
         }
+        @Composable
+fun AdmobBannerView() {
+    AndroidView(
+        modifier = Modifier.fillMaxWidth().height(50.dp),
+        factory = { context ->
+            AdView(context).apply {
+                setAdSize(AdSize.BANNER)
+                this.adUnitId = "ca-app-pub-1929899985079401/3325253053"ٍ
+                loadAd(AdRequest.Builder().build())
+            }
+        }
+    )
+}
+
     }
 }
 
