@@ -553,8 +553,11 @@ fun HistoryScreen() {
                     Text("أداء الجهاز: ${session.third}", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
-            AdmobBannerView()
-        }
+               item {
+        AdmobBannerView()
+    }
+
+      
         @Composable
 fun AdmobBannerView() {
     AndroidView(
